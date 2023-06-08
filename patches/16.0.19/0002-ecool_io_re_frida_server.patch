@@ -1,0 +1,25 @@
+From 398c83b1ac39586687355238a850ffa6fd194b46 Mon Sep 17 00:00:00 2001
+From: ecool <ecool@example.com>
+Date: Fri, 9 Jun 2023 00:18:50 +0800
+Subject: [PATCH] ecool_io_re_frida_server
+
+---
+ server/server.vala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/server/server.vala b/server/server.vala
+index b758be07..44fb51fc 100644
+--- a/server/server.vala
++++ b/server/server.vala
+@@ -1,7 +1,7 @@
+ namespace Frida.Server {
+ 	private static Application application;
+ 
+-	private const string DEFAULT_DIRECTORY = "re.frida.server";
++	private const string DEFAULT_DIRECTORY = "re.ecool.server";
+ 	private static bool output_version = false;
+ 	private static string? listen_address = null;
+ 	private static string? certpath = null;
+-- 
+2.34.1
+

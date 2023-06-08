@@ -1,0 +1,111 @@
+From 40e82bf69ef6494351fc20eff0b411cf1721427b Mon Sep 17 00:00:00 2001
+From: ecool <ecool@example.com>
+Date: Fri, 9 Jun 2023 00:55:39 +0800
+Subject: [PATCH] ecool_anti_frida_build
+
+---
+ src/anti-frida.py  | 57 ++++++++++++++++++++++++++++++++++++++++++++++
+ src/embed-agent.sh |  8 +++++++
+ 2 files changed, 65 insertions(+)
+ create mode 100644 src/anti-frida.py
+
+diff --git a/src/anti-frida.py b/src/anti-frida.py
+new file mode 100644
+index 00000000..172447e6
+--- /dev/null
++++ b/src/anti-frida.py
+@@ -0,0 +1,57 @@
++import lief
++import sys
++import random
++import os
++ 
++def log_color(msg):
++    print(f"\033[1;31;40m{msg}\033[0m")
++ 
++if __name__ == "__main__":
++    input_file = sys.argv[1]
++    log_color(f"[*] Patch frida-agent: {input_file}")
++    random_name = "".join(random.sample("ABCDEFGHIJKLMNOPQ", 5)) # generate random "frida-agent-arm/64.so" name
++    log_color(f"[*] Patch `frida` to `{random_name}``")
++ 
++    binary = lief.parse(input_file)
++ 
++    if not binary:
++        exit()
++ 
++    for symbol in binary.symbols:  # 修改符号名
++        if symbol.name == "frida_agent_main":
++            symbol.name = "main"
++ 
++        if "frida" in symbol.name:
++            symbol.name = symbol.name.replace("frida", random_name)
++ 
++        if "FRIDA" in symbol.name:
++            symbol.name = symbol.name.replace("FRIDA", random_name)
++ 
++    all_patch_string = ["FridaScriptEngine", "GLib-GIO", "GDBusProxy", "GumScript"]  # 字符串特征修改 尽量与源字符一样
++    for section in binary.sections:
++        log_color(section.name)
++        if section.name != ".rodata":
++            continue
++        for patch_str in all_patch_string:
++            addr_all = section.search_all(patch_str)  # Patch 内存字符串
++            for addr in addr_all:
++                patch = [ord(n) for n in list(patch_str)[::-1]]
++                log_color(f"[*] Current section name={section.name} offset={hex(section.file_offset + addr)} {patch_str}-{"".join(list(patch_str)[::-1])}")
++                binary.patch_address(section.file_offset + addr, patch)
++ 
++    binary.write(input_file)
++ 
++    # thread_gum_js_loop
++    random_name = "".join(random.sample("abcdefghijklmn", 11))
++    log_color(f"[*] Patch `gum-js-loop` to `{random_name}`")
++    os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {input_file}")
++ 
++    # thread_gmain
++    random_name = "".join(random.sample("abcdefghijklmn", 5))
++    log_color(f"[*] Patch `gmain` to `{random_name}`")
++    os.system(f"sed -b -i s/gmain/{random_name}/g {input_file}")
++ 
++    # thread_gdbus
++    random_name = "".join(random.sample("abcdefghijklmn", 5))
++    log_color(f"[*] Patch `gdbus` to `{random_name}`")
++    os.system(f"sed -b -i s/gdbus/{random_name}/g {input_file}")
+\ No newline at end of file
+diff --git a/src/embed-agent.sh b/src/embed-agent.sh
+index 6119b5e1..0b679ef9 100755
+--- a/src/embed-agent.sh
++++ b/src/embed-agent.sh
+@@ -10,6 +10,7 @@ resource_compiler=$7
+ resource_config=$8
+ lipo=$9
+ 
++custom_script="%output_dir/../../../../frida-core/src/anti-frida.py"
+ priv_dir="$output_dir/frida-agent@emb"
+ 
+ mkdir -p "$priv_dir"
+@@ -22,6 +23,9 @@ collect_generic_agent ()
+   else
+     touch "$embedded_agent"
+   fi
++  if [ -f "$custom_script" ]; then
++    python "$custom_script" "$embedded_agent"
++  fi
+   embedded_agents+=("$embedded_agent")
+ }
+ 
+@@ -54,6 +58,10 @@ case $host_os in
+       exit 1
+     fi
+ 
++    if [ -f "$custom_script" ]; then
++      python "$custom_script" "$embedded_agent"
++    fi
++
+     exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/frida-data-agent" "$embedded_agent"
+     ;;
+   *)
+-- 
+2.34.1
+

@@ -1,0 +1,25 @@
+From efe74577dadf4aeb8c8b25a19734de97941cc84a Mon Sep 17 00:00:00 2001
+From: ecool <ecool@example.com>
+Date: Fri, 9 Jun 2023 01:00:10 +0800
+Subject: [PATCH] ecool_frida_protocol_unexpected_command
+
+---
+ src/droidy/droidy-client.vala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/droidy/droidy-client.vala b/src/droidy/droidy-client.vala
+index 0ed2edeb..5ab4c006 100644
+--- a/src/droidy/droidy-client.vala
++++ b/src/droidy/droidy-client.vala
+@@ -1013,7 +1013,7 @@ namespace Frida.Droidy {
+ 						case "OPEN":
+ 						case "CLSE":
+ 						case "WRTE":
+-							throw new Error.PROTOCOL ("Unexpected command");
++							break;
+ 
+ 						default:
+ 							var length = parse_length (command_or_length);
+-- 
+2.34.1
+
